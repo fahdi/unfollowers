@@ -1,0 +1,131 @@
+.intro h2 {
+  margin-bottom: 0.25rem;
+}
+
+.intro p {
+  color: var(--ion-color-medium);
+  margin-top: 0;
+}
+
+.dropzone {
+  align-items: center;
+  border: 2px dashed var(--ion-color-medium);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.dropzone--active {
+  background: var(--ion-color-light);
+  border-color: var(--ion-color-primary);
+}
+
+.dropzone__icon {
+  color: var(--ion-color-medium);
+  font-size: 2.5rem;
+}
+
+.dropzone__hint {
+  color: var(--ion-color-medium);
+  margin: 0;
+}
+
+.how {
+  margin-top: 1.5rem;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  ol {
+    color: var(--ion-color-medium);
+    padding-left: 1.25rem;
+  }
+}
+
+.paste {
+  margin-top: 1rem;
+
+  ion-textarea {
+    margin-bottom: 0.75rem;
+  }
+}
+
+.error {
+  display: block;
+  margin: 1rem 0;
+}
+
+.stats {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  margin: 0 0 1rem;
+}
+
+.stat {
+  background: var(--ion-color-light);
+  border-radius: 10px;
+  padding: 0.75rem;
+
+  dt {
+    color: var(--ion-color-medium);
+    font-size: 0.8rem;
+  }
+
+  dd {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+  }
+}
+
+.stat--headline dd {
+  color: var(--ion-color-danger);
+}
+
+.change {
+  align-items: center;
+  background: var(--ion-color-warning-tint);
+  border-radius: 10px;
+  color: var(--ion-color-warning-contrast);
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.change__gained {
+  display: block;
+  opacity: 0.8;
+}
+
+.result-count {
+  color: var(--ion-color-medium);
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+.empty {
+  color: var(--ion-color-medium);
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
