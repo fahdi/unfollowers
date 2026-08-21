@@ -6,7 +6,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.19.0"
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
   },
   "scripts": {
     "ng": "ng",
@@ -20,7 +20,8 @@
     "format:check": "prettier --check .",
     "sync": "cap sync",
     "cap": "cap",
-    "build:native": "ng build && cap sync"
+    "build:native": "ng build && cap sync",
+    "test:ci": "ng test --no-watch --coverage"
   },
   "dependencies": {
     "@angular/common": "^22.1.0",
@@ -47,6 +48,7 @@
     "@capacitor/cli": "^8.5.0",
     "@eslint/js": "^10.0.1",
     "@ionic/angular-toolkit": "^13.0.0",
+    "@vitest/coverage-v8": "^4.1.11",
     "angular-eslint": "^22.1.0",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
