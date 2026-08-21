@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { provideIonicAngular } from '@ionic/angular';
 import { strToU8, zipSync } from 'fflate';
-import { UnfollowersService } from '../instagram/unfollowers.service';
+import { MemoryStorage } from '../../testing/memory-storage';
+import { RELATIONSHIP_STORAGE, UnfollowersService } from '../instagram/unfollowers.service';
 import { HomePage } from './home.page';
 
 const entry = (username: string) => ({
@@ -22,11 +23,13 @@ const zipBlob = (followers: string[], following: string[]) =>
   ]);
 
 describe('HomePage', () => {
+  let storage: MemoryStorage;
+
   beforeEach(async () => {
-    localStorage.clear();
+    storage = new MemoryStorage();
     await TestBed.configureTestingModule({
       imports: [HomePage],
-      providers: [provideIonicAngular()],
+      providers: [provideIonicAngular(), { provide: RELATIONSHIP_STORAGE, useValue: storage }],
     }).compileComponents();
   });
 
@@ -146,7 +149,7 @@ describe('HomePage', () => {
 
     expect(page.hasReport()).toBe(false);
     expect(TestBed.inject(UnfollowersService).status()).toBe('idle');
-    expect(localStorage.getItem('unfollowers.follower-snapshot.v1')).toBeNull();
+    expect(storage.getItem('unfollowers.follower-snapshot.v1')).toBeNull();
   });
 
   it('summarises who left in a single readable line', async () => {

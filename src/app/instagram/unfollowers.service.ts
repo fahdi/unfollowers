@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { InjectionToken, Injectable, computed, inject, signal } from '@angular/core';
 import {
   RelationshipReport,
   SnapshotChange,
@@ -11,6 +11,41 @@ import { InstagramAccount, parseRelationshipSource } from './export-parser';
 /** Where the previous follower list is kept between visits. */
 export const SNAPSHOT_STORAGE_KEY = 'unfollowers.follower-snapshot.v1';
 
+/**
+ * Probes for a usable `localStorage`.
+ *
+ * Reaching for the global directly is not safe: private browsing throws on
+ * write, server rendering has no storage at all, and Node 26 defines a global
+ * `localStorage` that is `undefined` unless the process was started with
+ * `--localstorage-file`. Returning `null` lets callers degrade quietly.
+ */
+function browserStorage(): Storage | null {
+  try {
+    const storage = globalThis.localStorage as Storage | undefined;
+    if (!storage) {
+      return null;
+    }
+
+    // A read-only or full store only reveals itself when written to.
+    const probe = `${SNAPSHOT_STORAGE_KEY}.probe`;
+    storage.setItem(probe, '1');
+    storage.removeItem(probe);
+
+    return storage;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Where follower history is kept. Injected rather than reached for, so tests
+ * and non-browser environments can supply their own or none at all.
+ */
+export const RELATIONSHIP_STORAGE = new InjectionToken<Storage | null>(
+  'unfollowers.relationship-storage',
+  { providedIn: 'root', factory: browserStorage },
+);
+
 /** Where an import has got to. */
 export type ImportStatus = 'idle' | 'reading' | 'ready' | 'error';
 
@@ -19,9 +54,13 @@ interface StoredSnapshot {
   readonly followers: readonly InstagramAccount[];
 }
 
-function readStoredSnapshot(): StoredSnapshot | null {
+function readStoredSnapshot(storage: Storage | null): StoredSnapshot | null {
+  if (!storage) {
+    return null;
+  }
+
   try {
-    const raw = localStorage.getItem(SNAPSHOT_STORAGE_KEY);
+    const raw = storage.getItem(SNAPSHOT_STORAGE_KEY);
     if (!raw) {
       return null;
     }
@@ -42,9 +81,17 @@ function readStoredSnapshot(): StoredSnapshot | null {
   return null;
 }
 
-function writeStoredSnapshot(followers: readonly InstagramAccount[], capturedAt: string): void {
+function writeStoredSnapshot(
+  storage: Storage | null,
+  followers: readonly InstagramAccount[],
+  capturedAt: string,
+): void {
+  if (!storage) {
+    return;
+  }
+
   try {
-    localStorage.setItem(
+    storage.setItem(
       SNAPSHOT_STORAGE_KEY,
       JSON.stringify({
         capturedAt,
@@ -72,6 +119,8 @@ function messageFor(error: unknown): string {
  */
 @Injectable({ providedIn: 'root' })
 export class UnfollowersService {
+  private readonly storage = inject(RELATIONSHIP_STORAGE);
+
   private readonly currentStatus = signal<ImportStatus>('idle');
   private readonly currentReport = signal<RelationshipReport | null>(null);
   private readonly currentChange = signal<SnapshotChange | null>(null);
@@ -137,7 +186,7 @@ export class UnfollowersService {
     this.reset();
 
     try {
-      localStorage.removeItem(SNAPSHOT_STORAGE_KEY);
+      this.storage?.removeItem(SNAPSHOT_STORAGE_KEY);
     } catch {
       // Nothing to do; the in-memory state is already cleared.
     }
@@ -147,14 +196,14 @@ export class UnfollowersService {
     followers: readonly InstagramAccount[],
     following: readonly InstagramAccount[],
   ): void {
-    const previous = readStoredSnapshot();
+    const previous = readStoredSnapshot(this.storage);
 
     this.currentReport.set(compareRelationships({ followers, following }));
     this.currentChange.set(compareFollowerSnapshots(previous?.followers ?? null, followers));
     this.comparedAgainst.set(previous?.capturedAt ?? null);
     this.currentStatus.set('ready');
 
-    writeStoredSnapshot(followers, new Date().toISOString());
+    writeStoredSnapshot(this.storage, followers, new Date().toISOString());
   }
 
   private fail(message: string): void {

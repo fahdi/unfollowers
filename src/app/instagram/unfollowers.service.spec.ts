@@ -1,6 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { strToU8, zipSync } from 'fflate';
-import { SNAPSHOT_STORAGE_KEY, UnfollowersService } from './unfollowers.service';
+import { MemoryStorage } from '../../testing/memory-storage';
+import {
+  RELATIONSHIP_STORAGE,
+  SNAPSHOT_STORAGE_KEY,
+  UnfollowersService,
+} from './unfollowers.service';
 
 const entry = (username: string) => ({
   string_list_data: [{ href: `https://www.instagram.com/${username}`, value: username }],
@@ -21,10 +26,13 @@ const zipBlob = (followers: string[], following: string[]) =>
 
 describe('UnfollowersService', () => {
   let service: UnfollowersService;
+  let storage: MemoryStorage;
 
   beforeEach(() => {
-    localStorage.clear();
-    TestBed.configureTestingModule({});
+    storage = new MemoryStorage();
+    TestBed.configureTestingModule({
+      providers: [{ provide: RELATIONSHIP_STORAGE, useValue: storage }],
+    });
     service = TestBed.inject(UnfollowersService);
   });
 
@@ -100,6 +108,32 @@ describe('UnfollowersService', () => {
     expect(service.change()?.lost.map((a) => a.username)).toEqual(['grace']);
   });
 
+  it('resolves whatever storage this environment offers, without throwing', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({});
+
+    // Exercises the real fallback: jsdom supplies a store, a bare Node 26
+    // process supplies an undefined global, and neither may throw here.
+    const resolved = TestBed.inject(RELATIONSHIP_STORAGE);
+
+    expect(resolved === null || typeof resolved.setItem === 'function').toBe(true);
+  });
+
+  it('still reports when there is no storage at all, as in private browsing', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [{ provide: RELATIONSHIP_STORAGE, useValue: null }],
+    });
+    const withoutStorage = TestBed.inject(UnfollowersService);
+
+    await withoutStorage.importArchive(zipBlob(['ada', 'grace'], ['ada', 'hopper']));
+
+    expect(withoutStorage.status()).toBe('ready');
+    expect(withoutStorage.report()?.notFollowingBack.map((a) => a.username)).toEqual(['hopper']);
+    // Nowhere to keep history, so there is nothing to compare against.
+    expect(withoutStorage.change()).toEqual({ lost: [], gained: [] });
+  });
+
   it('forgets everything on request, stored snapshot included', async () => {
     await service.importArchive(zipBlob(['ada'], ['ada']));
 
@@ -107,11 +141,11 @@ describe('UnfollowersService', () => {
 
     expect(service.report()).toBeNull();
     expect(service.status()).toBe('idle');
-    expect(localStorage.getItem(SNAPSHOT_STORAGE_KEY)).toBeNull();
+    expect(storage.getItem(SNAPSHOT_STORAGE_KEY)).toBeNull();
   });
 
   it('survives a corrupted stored snapshot rather than refusing to start', async () => {
-    localStorage.setItem(SNAPSHOT_STORAGE_KEY, '{ not json');
+    storage.setItem(SNAPSHOT_STORAGE_KEY, '{ not json');
 
     await service.importArchive(zipBlob(['ada'], ['ada']));
 
