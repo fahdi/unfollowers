@@ -1,8 +1,7 @@
 {
-  "name": "myApp",
-  "app_id": "",
-  "type": "ionic-angular",
+  "name": "unfollowers",
   "integrations": {
-    "cordova": {}
-  }
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
 }
