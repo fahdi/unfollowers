@@ -1,8 +1,13 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { provideIonicAngular } from '@ionic/angular';
 import { AuthService } from '../auth/auth.service';
 import { RegisterPage } from './register.page';
+
+/** Stands in for the home tab so real navigation out of the form resolves. */
+@Component({ template: '' })
+class StubHomePage {}
 
 describe('RegisterPage', () => {
   let auth: AuthService;
@@ -10,7 +15,10 @@ describe('RegisterPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [RegisterPage],
-      providers: [provideIonicAngular(), provideRouter([])],
+      providers: [
+        provideIonicAngular(),
+        provideRouter([{ path: 'tabs/home', component: StubHomePage }]),
+      ],
     }).compileComponents();
     auth = TestBed.inject(AuthService);
   });
