@@ -32,7 +32,8 @@ to-do item.
 
 ## Requirements
 
-Node.js 20.19 or newer. Node 20, 22 and 24 are exercised in CI.
+Node.js 22.22.3 or newer. The Angular CLI rejects anything older, and also accepts the 24.15+ and
+26+ lines. Node 22, 24 and 26 are exercised in CI.
 
 ## Getting started
 
