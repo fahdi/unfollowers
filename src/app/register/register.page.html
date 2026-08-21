@@ -1,0 +1,47 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Create account</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <ion-list [inset]="true">
+      <ion-input
+        formControlName="username"
+        label="Username"
+        labelPlacement="floating"
+        autocomplete="username"
+        errorText="Choose a username."
+        [class.ion-touched]="form.controls.username.touched"
+      ></ion-input>
+
+      <ion-input
+        formControlName="password"
+        type="password"
+        label="Password"
+        labelPlacement="floating"
+        autocomplete="new-password"
+        errorText="Passwords are at least 8 characters."
+        [class.ion-touched]="form.controls.password.touched"
+      ></ion-input>
+
+      <ion-input
+        formControlName="confirmPassword"
+        type="password"
+        label="Confirm password"
+        labelPlacement="floating"
+        autocomplete="new-password"
+        [class.ion-invalid]="form.hasError('passwordMismatch')"
+        [class.ion-touched]="form.controls.confirmPassword.touched"
+        errorText="Both passwords must match."
+      ></ion-input>
+    </ion-list>
+
+    <ion-button type="submit" expand="block">Create account</ion-button>
+  </form>
+
+  <ion-button routerLink="/login" fill="clear" expand="block">
+    Already registered? Sign in
+  </ion-button>
+</ion-content>

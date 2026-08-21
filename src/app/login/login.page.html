@@ -1,0 +1,38 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Sign in</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <ion-list [inset]="true">
+      <ion-input
+        formControlName="username"
+        label="Username"
+        labelPlacement="floating"
+        autocomplete="username"
+        [errorText]="usernameError()"
+        [class.ion-invalid]="isInvalid('username')"
+        [class.ion-touched]="form.controls.username.touched"
+      ></ion-input>
+
+      <ion-input
+        formControlName="password"
+        type="password"
+        label="Password"
+        labelPlacement="floating"
+        autocomplete="current-password"
+        [errorText]="passwordError()"
+        [class.ion-invalid]="isInvalid('password')"
+        [class.ion-touched]="form.controls.password.touched"
+      ></ion-input>
+    </ion-list>
+
+    <ion-button type="submit" expand="block">Sign in</ion-button>
+  </form>
+
+  <ion-button routerLink="/register" fill="clear" expand="block">
+    Need an account? Register
+  </ion-button>
+</ion-content>

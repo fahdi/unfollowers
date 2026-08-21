@@ -32,4 +32,25 @@ describe('app routes', () => {
       expect(page.component, `route "${page.path}" should not eagerly import`).toBeUndefined();
     }
   });
+
+  it('exposes sign-in and registration outside the tabs shell', () => {
+    expect(pathsOf(routes)).toEqual(expect.arrayContaining(['login', 'register']));
+  });
+
+  it('lazy-loads the auth pages too', () => {
+    for (const path of ['login', 'register']) {
+      const route = routes.find((r) => r.path === path);
+      expect(route?.loadComponent, `route "${path}" should use loadComponent`).toBeDefined();
+      expect(route?.component, `route "${path}" should not eagerly import`).toBeUndefined();
+    }
+  });
+
+  it('falls back to the home tab for unknown paths', () => {
+    const wildcard = routes.find((r) => r.path === '**');
+    expect(wildcard?.redirectTo).toBe('/tabs/home');
+  });
+
+  it('keeps the wildcard route last so it cannot shadow real routes', () => {
+    expect(routes.at(-1)?.path).toBe('**');
+  });
 });
