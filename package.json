@@ -18,7 +18,9 @@
     "lint": "ng lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "sync": "cap sync"
+    "sync": "cap sync",
+    "cap": "cap",
+    "build:native": "ng build && cap sync"
   },
   "dependencies": {
     "@angular/common": "^22.1.0",
@@ -31,6 +33,7 @@
     "@capacitor/core": "^8.5.0",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/keyboard": "^8.0.5",
+    "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
     "@ionic/angular": "^9.0.0",
     "ionicons": "^8.1.0",
