@@ -1,19 +1,181 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>Home</ion-title>
+    <ion-title>Unfollowers</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true" class="ion-padding">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Home</ion-title>
+      <ion-title size="large">Unfollowers</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <h2>Who unfollowed you?</h2>
-  <p>
-    Follow-then-unfollow is a tiresome habit. This app exists to surface it, with no ads and no
-    upsell.
-  </p>
+  @if (!hasReport()) {
+    <section class="intro">
+      <h2>Who doesn't follow you back?</h2>
+      <p>
+        Drop in your Instagram data export and this works it out on your device. Nothing is
+        uploaded, and there is no login.
+      </p>
+    </section>
+
+    <div
+      class="dropzone"
+      [class.dropzone--active]="isDraggingOver()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+    >
+      @if (isBusy()) {
+        <ion-spinner aria-label="Reading your export"></ion-spinner>
+        <p>Reading your export…</p>
+      } @else {
+        <ion-icon name="cloud-upload-outline" aria-hidden="true" class="dropzone__icon"></ion-icon>
+        <p class="dropzone__hint">Drop your <code>instagram-…zip</code> here</p>
+        <ion-button (click)="fileInput.click()">Choose export file</ion-button>
+        <input
+          #fileInput
+          type="file"
+          accept=".zip,.json,application/zip"
+          hidden
+          (change)="onFileChosen($event)"
+        />
+      }
+    </div>
+
+    <details class="how">
+      <summary>How to get the export</summary>
+      <ol>
+        <li>Instagram → Settings → Accounts Centre → Your information and permissions.</li>
+        <li>Export your information → Download to device.</li>
+        <li>
+          Select <strong>Followers and following</strong> only, all time, format
+          <strong>JSON</strong>.
+        </li>
+        <li>Instagram emails you a ZIP, usually within minutes. Drop it in above.</li>
+      </ol>
+    </details>
+
+    <div class="paste">
+      <ion-button fill="clear" size="small" (click)="togglePaste()">
+        <ion-icon name="document-text-outline" slot="start" aria-hidden="true"></ion-icon>
+        {{ pasteOpen() ? 'Hide the paste option' : 'Or paste two lists instead' }}
+      </ion-button>
+
+      @if (pasteOpen()) {
+        <ion-textarea
+          label="Followers"
+          labelPlacement="stacked"
+          fill="outline"
+          [rows]="4"
+          placeholder="One handle per line"
+          [value]="pastedFollowers()"
+          (ionInput)="pastedFollowers.set($any($event).detail.value ?? '')"
+        ></ion-textarea>
+
+        <ion-textarea
+          label="Following"
+          labelPlacement="stacked"
+          fill="outline"
+          [rows]="4"
+          placeholder="One handle per line"
+          [value]="pastedFollowing()"
+          (ionInput)="pastedFollowing.set($any($event).detail.value ?? '')"
+        ></ion-textarea>
+
+        <ion-button expand="block" (click)="importPaste()">Compare these lists</ion-button>
+      }
+    </div>
+  }
+
+  @if (error(); as message) {
+    <ion-note color="danger" class="error" role="alert">{{ message }}</ion-note>
+  }
+
+  @if (hasReport()) {
+    @if (counts(); as tally) {
+      <dl class="stats">
+        <div class="stat">
+          <dt>Followers</dt>
+          <dd>{{ tally.followers }}</dd>
+        </div>
+        <div class="stat">
+          <dt>Following</dt>
+          <dd>{{ tally.following }}</dd>
+        </div>
+        <div class="stat stat--headline">
+          <dt>Don't follow back</dt>
+          <dd>{{ tally.notFollowingBack }}</dd>
+        </div>
+        <div class="stat">
+          <dt>Mutuals</dt>
+          <dd>{{ tally.mutuals }}</dd>
+        </div>
+      </dl>
+    }
+
+    @if (lostFollowers().length > 0) {
+      <div class="change" role="status">
+        <ion-icon name="person-remove-outline" aria-hidden="true"></ion-icon>
+        <p>
+          <strong>{{ lostFollowers().length }}</strong> unfollowed you since your last export:
+          {{ lostSummary() }}.
+          @if (gainedFollowers().length > 0) {
+            <span class="change__gained"
+              >{{ gainedFollowers().length }} new followers arrived.</span
+            >
+          }
+        </p>
+      </div>
+    }
+
+    <ion-segment [value]="view()" (ionChange)="onSegmentChange($any($event).detail.value)">
+      <ion-segment-button value="notFollowingBack">
+        <ion-label>Don't follow back</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="notFollowedBack">
+        <ion-label>You don't follow</ion-label>
+      </ion-segment-button>
+      <ion-segment-button value="mutuals">
+        <ion-label>Mutuals</ion-label>
+      </ion-segment-button>
+    </ion-segment>
+
+    <ion-searchbar
+      placeholder="Search handles"
+      [value]="search()"
+      (ionInput)="search.set($any($event).detail.value ?? '')"
+    ></ion-searchbar>
+
+    <p class="result-count">{{ visibleCount() }} accounts</p>
+
+    @if (visibleCount() === 0) {
+      <p class="empty">Nothing here — which, on this tab, may well be good news.</p>
+    } @else {
+      <ion-list>
+        @for (account of visibleAccounts(); track account.username) {
+          <ion-item [href]="profileUrl(account)" target="_blank" rel="noopener noreferrer">
+            <ion-label>{{ '@' + account.username }}</ion-label>
+            <ion-icon name="open-outline" slot="end" aria-hidden="true"></ion-icon>
+          </ion-item>
+        }
+      </ion-list>
+    }
+
+    <div class="actions">
+      <ion-button fill="outline" (click)="downloadCsv()">
+        <ion-icon name="download-outline" slot="start" aria-hidden="true"></ion-icon>
+        Download CSV
+      </ion-button>
+      <ion-button fill="clear" (click)="importAnother()">
+        <ion-icon name="refresh-outline" slot="start" aria-hidden="true"></ion-icon>
+        Import another export
+      </ion-button>
+      <ion-button fill="clear" color="medium" (click)="forgetEverything()">
+        <ion-icon name="trash-outline" slot="start" aria-hidden="true"></ion-icon>
+        Forget my data
+      </ion-button>
+    </div>
+  }
 </ion-content>

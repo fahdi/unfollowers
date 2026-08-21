@@ -9,10 +9,38 @@ This app exists to surface that. It is small on purpose: no ads, no upsell, one 
 
 ## Status
 
-The app shell is complete and runs on a current toolchain. **The follower-diffing feature is not
-implemented yet**, and the sign-in flow does not authenticate against anything — see
-[Instagram API access](#instagram-api-access) for why that is a design question rather than a
-to-do item.
+Working. Drop in an Instagram data export and the app reports who does not follow you back, who
+you have not followed back, and your mutuals — and, from the second export onwards, exactly who
+unfollowed you since last time.
+
+The sign-in flow still does not authenticate against anything, and does not need to: the report is
+computed entirely on device. See [Instagram API access](#instagram-api-access) for why there is no
+live follower feed to sign in to.
+
+## How it works
+
+1. Request your data from Instagram: **Settings → Accounts Centre → Your information and
+   permissions → Export your information**. Pick **Followers and following**, all time, format
+   **JSON**.
+2. Instagram emails a ZIP, usually within a few minutes.
+3. Drop that ZIP onto the home tab.
+
+The archive is unzipped in the browser with [fflate](https://github.com/101arrowz/fflate); nothing
+is uploaded anywhere, and there is no account to create. The only thing written to storage is the
+list of follower handles from your last import, which is what lets the next import name who left.
+"Forget my data" deletes it.
+
+Three export shapes are read, because Instagram has shipped all of them:
+
+| Shape                            | Where it appears                                 |
+| -------------------------------- | ------------------------------------------------ |
+| Bare top-level array             | `followers_1.json`                               |
+| `relationships_*` wrapper object | `following.json`, `pending_follow_requests.json` |
+| HTML anchors                     | `followers_1.html` when HTML format is chosen    |
+
+Large accounts get their followers split across `followers_1.json`, `followers_2.json` and so on;
+those are merged and de-duplicated. If you would rather not wait for an export, the home tab also
+takes two pasted lists of handles.
 
 ## Tech stack
 
@@ -85,7 +113,8 @@ src/
 │   ├── auth/           Session state (AuthService)
 │   ├── contact/        Contact page
 │   ├── core/           Native startup chrome (NativeShellService)
-│   ├── home/           Home page
+│   ├── home/           Home page — import, report and results
+│   ├── instagram/      Export parsing, archive reading and the comparison
 │   ├── login/          Sign-in form
 │   ├── register/       Registration form
 │   ├── tabs/           Tab bar shell
@@ -108,10 +137,14 @@ official APIs:
 - The **Instagram Basic Display API** was retired on 4 December 2024.
 - The **Instagram Graph API** exposes a follower _count_, but not the follower _list_.
 
-So there is no sanctioned way to read who follows an account. Any implementation has to either
-work from a user's own [data export](https://www.instagram.com/download/request/), or use an
-unofficial route that violates Instagram's Terms of Use and risks the user's account. `AuthService`
-is deliberately transport-agnostic until that decision is made.
+So there is no sanctioned way to read who follows an account, and scraping one is both against
+Instagram's Terms of Use and a good way to get an account restricted. This app therefore reads the
+user's own [data export](https://www.instagram.com/download/request/), which is the only route that
+is both complete and permitted.
+
+The ingestion layer is deliberately kept separate from the comparison in `src/app/instagram/`, so
+if a follower-list API ever appears it can be added as another source without touching the
+analysis. `AuthService` stays transport-agnostic for the same reason.
 
 ## Contributing
 
