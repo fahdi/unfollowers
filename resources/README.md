@@ -1,8 +1,21 @@
-These are Cordova resources. You can replace icon.png and splash.png and run
-`ionic cordova resources` to generate custom icons and splash screens for your
-app. See `ionic cordova resources --help` for details.
+# App icons and splash screens
 
-Cordova reference documentation:
+`icon.png` and `splash.png` are the sources for every generated app icon and splash screen.
 
-- Icons: https://cordova.apache.org/docs/en/latest/config_ref/images.html
-- Splash Screens: https://cordova.apache.org/docs/en/latest/reference/cordova-plugin-splashscreen/
+Regenerate the native assets with [`@capacitor/assets`](https://github.com/ionic-team/capacitor-assets):
+
+```bash
+npx @capacitor/assets generate --assetPath resources
+```
+
+This writes into the `android/` and `ios/` projects, which are generated output and are not
+committed. Create them first with `npx cap add android` / `npx cap add ios`.
+
+Source image requirements:
+
+| File         | Minimum size |
+| ------------ | ------------ |
+| `icon.png`   | 1024 × 1024  |
+| `splash.png` | 2732 × 2732  |
+
+> This project used Cordova until v1.0.0. `ionic cordova resources` no longer applies.

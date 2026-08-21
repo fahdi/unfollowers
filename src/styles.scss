@@ -14,5 +14,8 @@
 @use '@ionic/angular/css/text-transformation.css';
 @use '@ionic/angular/css/flex-utils.css';
 
+/* App theme tokens. */
+@use 'theme/variables';
+
 /* Follow the OS light/dark preference. */
 @use '@ionic/angular/css/palettes/dark.system.css';
